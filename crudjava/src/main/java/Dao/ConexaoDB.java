@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public class ConexaoDB {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/db_project";
+    private static final String URL = "jdbc:mysql://localhost:3306/db_project?useUnicode=true&characterEncoding=UTF-8";
     private static final String USER = "root";
     private static final String PASSAWORD = "teste1234";
 

@@ -8,14 +8,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UsuarioDao {
-    public void criarUsuario(String nome, String email, int telefone, String sexo) throws SQLException {
+    public void criarUsuario(String nome, String email, String telefone, String sexo) throws SQLException {
         String sql = "INSERT INTO usuarios (nome, email, telefone, sexo) VALUES (?, ?, ?, ?)";
         try (Connection conexao = ConexaoDB.getConnection();
                 PreparedStatement stmt = conexao.prepareStatement(sql)) {
             stmt.setString(1, nome);
             stmt.setString(2, email);
-            stmt.setInt(3, telefone);
+            stmt.setString(3, telefone);
             stmt.setString(4, sexo);
+            stmt.executeUpdate();
+        }catch (SQLException e) {
+            throw new SQLException("Erro ao inserir usuário no banco de dados", e);
         }
     }
 
@@ -27,7 +30,7 @@ public class UsuarioDao {
                 ResultSet resultado = stmt.executeQuery()) {
             while (resultado.next()) {
                 usuarios.add(new String[] { String.valueOf(resultado.getInt("id")), resultado.getString("nome"),
-                        resultado.getString("email"), String.valueOf(resultado.getInt("telefone")),
+                        resultado.getString("email"), resultado.getString("telefone"),
                         resultado.getString("sexo") });
             }
 
@@ -35,13 +38,13 @@ public class UsuarioDao {
         return usuarios;
     }
 
-    public void attUsuario(int id, String nome, String email, int telefone, String sexo) throws SQLException {
+    public void attUsuario(int id, String nome, String email, String telefone, String sexo) throws SQLException {
         String sql = "UPDATE usuarios SET nome = ?, email = ?, telefone = ?, sexo = ? WHERE id = ?";
         try (Connection conexao = ConexaoDB.getConnection();
                 PreparedStatement stmt = conexao.prepareStatement(sql)) {
             stmt.setString(1, nome);
             stmt.setString(2, email);
-            stmt.setInt(3, telefone);
+            stmt.setString(3, telefone);
             stmt.setString(4, sexo);
             stmt.setInt(5, id);
             stmt.executeUpdate();

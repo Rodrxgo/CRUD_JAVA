@@ -13,17 +13,17 @@ public class UsuarioController {
         this.usuarioDao = new UsuarioDao();
     }
 
-    public void criarUsuario(String nome, String email, int telefone, String sexo) throws SQLException {
-        if (nome == null || nome.trim().isEmpty() || email == null || email.trim().isEmpty() || telefone != 0
-                || sexo == null || sexo.trim().isEmpty()) {
+    public void criarUsuario(String nome, String email, String telefone, String sexo) throws SQLException {
+        if (nome == null || nome.trim().isEmpty() || email == null || email.trim().isEmpty()
+                || telefone == null || telefone.trim().isEmpty() || sexo == null || sexo.trim().isEmpty()) {
             throw new IllegalArgumentException("Todos os campos precisam estar preenchidos.");
         }
         usuarioDao.criarUsuario(nome, email, telefone, sexo);
     }
 
-    public void attUsuario(int id, String nome, String email, int telefone, String sexo) throws SQLException {
-        if (id <= 0 || nome == null || nome.trim().isEmpty() || email == null || email.trim().isEmpty() || telefone != 0
-                || sexo == null || sexo.trim().isEmpty()) {
+    public void attUsuario(int id, String nome, String email, String telefone, String sexo) throws SQLException {
+        if (id <= 0 || nome == null || nome.trim().isEmpty() || email == null || email.trim().isEmpty()
+                || telefone == null || telefone.trim().isEmpty() || sexo == null || sexo.trim().isEmpty()) {
             throw new IllegalArgumentException("Todos os campos precisam estar preenchidos.");
         }
         usuarioDao.attUsuario(id, nome, email, telefone, sexo);
