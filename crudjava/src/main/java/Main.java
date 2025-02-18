@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -22,6 +24,8 @@ public class Main {
         servidor.createContext("/", new StaticFileHandler());
         servidor.createContext("/criar", new CriarUsuarioHandler());
         servidor.createContext("/listarUsuario", new ListarUsuarioHandler());
+        servidor.createContext("/edit", new EditarUsuarioHandler());
+        servidor.createContext("/delete", new DeletarUsuarioHandler());
         servidor.start();
         System.out.println("A aplicação está rodando na porta http://localhost:8080");
     }
@@ -56,7 +60,7 @@ public class Main {
                     String telefone = data[2].split("=")[1];
                     String sexo = data[3].split("=")[1];
 
-                    telefone = telefone.replaceAll("[^0-9]", ""); // Remove caracteres não numéricos
+                    telefone = telefone.replaceAll("[^0-9]", "");
 
                     controller.criarUsuario(nome, email, telefone, sexo);
                     exchange.getResponseHeaders().set("Location", "/listarUsuario");
@@ -144,6 +148,99 @@ public class Main {
             byte[] response = html.toString().getBytes();
             exchange.sendResponseHeaders(200, response.length);
             exchange.getResponseBody().write(response);
+            exchange.close();
+        }
+    }
+
+    static class EditarUsuarioHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            String metodo = exchange.getRequestMethod();
+    
+            // Se for GET, retorna a página de edição com os dados preenchidos
+            if ("GET".equals(metodo)) {
+                String query = exchange.getRequestURI().getQuery();
+                if (query == null || !query.startsWith("id=")) {
+                    enviarResposta(exchange, 400, "ID inválido.");
+                    return;
+                }
+    
+                int id = Integer.parseInt(query.split("=")[1]);
+    
+                try {
+                    String[] usuario = controller.buscarUsuarioPorId(id);
+                    if (usuario == null) {
+                        enviarResposta(exchange, 404, "Usuário não encontrado.");
+                        return;
+                    }
+    
+                    // HTML da página de edição
+                    String html = "<form action='/edit' method='POST'>"
+                            + "<input type='hidden' name='id' value='" + usuario[0] + "'>"
+                            + "<label>Nome:</label><input type='text' name='nome' value='" + usuario[1] + "'><br>"
+                            + "<label>Email:</label><input type='email' name='email' value='" + usuario[2] + "'><br>"
+                            + "<label>Telefone:</label><input type='text' name='telefone' value='" + usuario[3] + "'><br>"
+                            + "<label>Sexo:</label><select name='sexo'>"
+                            + "<option value='Masculino'" + (usuario[4].equals("Masculino") ? " selected" : "") + ">Masculino</option>"
+                            + "<option value='Feminino'" + (usuario[4].equals("Feminino") ? " selected" : "") + ">Feminino</option>"
+                            + "</select><br>"
+                            + "<button type='submit'>Salvar</button></form>";
+    
+                    enviarResposta(exchange, 200, html);
+                } catch (Exception e) {
+                    enviarResposta(exchange, 500, "Erro ao carregar usuário: " + e.getMessage());
+                }
+    
+            } 
+            // Se for POST, realiza a atualização
+            else if ("POST".equals(metodo)) {
+                try (BufferedReader leitor = new BufferedReader(new InputStreamReader(exchange.getRequestBody()))) {
+                    String[] data = leitor.readLine().split("&");
+                    int id = Integer.parseInt(data[0].split("=")[1]);
+                    String nome = data[1].split("=")[1].replace("+", " ");
+                    String email = data[2].split("=")[1];
+                    String telefone = data[3].split("=")[1];
+                    String sexo = data[4].split("=")[1];
+    
+                    telefone = telefone.replaceAll("[^0-9]", "");
+    
+                    controller.attUsuario(id, nome, email, telefone, sexo);
+                    exchange.getResponseHeaders().set("Location", "/listarUsuario");
+                    exchange.sendResponseHeaders(302, -1);
+                } catch (Exception e) {
+                    enviarResposta(exchange, 500, "Erro ao atualizar usuário: " + e.getMessage());
+                }
+            } 
+            // Se for outro método, bloqueia
+            else {
+                enviarResposta(exchange, 405, "Método não permitido. Use GET ou POST.");
+            }
+        }
+    
+        private void enviarResposta(HttpExchange exchange, int statusCode, String mensagem) throws IOException {
+            exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8"); // ⬅ Define como HTML
+            byte[] respostaBytes = mensagem.getBytes("UTF-8");
+            exchange.sendResponseHeaders(statusCode, respostaBytes.length);
+            exchange.getResponseBody().write(respostaBytes);
+            exchange.close();
+        }
+    }
+
+    static class DeletarUsuarioHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if ("GET".equals(exchange.getRequestMethod())) {
+                try {
+                    int id = Integer.parseInt(exchange.getRequestURI().getQuery().split("=")[1]);
+                    controller.excluirUsuario(id);
+                    exchange.getResponseHeaders().set("Location", "/listarUsuario");
+                    exchange.sendResponseHeaders(302, -1);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    exchange.sendResponseHeaders(500, "Erro ao deletar usuário.".length());
+                    exchange.getResponseBody().write("Erro ao deletar usuário.".getBytes());
+                }
+            }
             exchange.close();
         }
     }

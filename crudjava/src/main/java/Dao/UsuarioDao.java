@@ -59,4 +59,19 @@ public class UsuarioDao {
             stmt.executeUpdate();
         }
     }
+
+    public String[] buscarUsuarioPorId(int id) throws SQLException {
+        String sql = "SELECT * FROM usuarios WHERE id = ?";
+        try (Connection conn = ConexaoDB.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setInt(1, id);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new String[]{String.valueOf(rs.getInt("id")), rs.getString("nome"), rs.getString("email"),
+                            rs.getString("telefone"), rs.getString("sexo")};
+                }
+            }
+        }
+        return null;
+    }
 }

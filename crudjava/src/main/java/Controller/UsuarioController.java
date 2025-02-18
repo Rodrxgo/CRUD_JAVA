@@ -40,4 +40,8 @@ public class UsuarioController {
         return usuarioDao.listarUsuarios();
     }
 
+    public String[] buscarUsuarioPorId(int id) throws SQLException {
+        return usuarioDao.buscarUsuarioPorId(id);
+    }
+
 }
